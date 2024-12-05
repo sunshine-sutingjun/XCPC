@@ -16,7 +16,7 @@ struct DSU
         }
         return x;
     }
-    bool unionSets(int x, int y)
+    bool connect(int x, int y)
     {
         x = findFa(x), y = findFa(y);
         if (x == y)
@@ -31,7 +31,7 @@ struct DSU
     {
         return findFa(x) == findFa(y);
     }
-    int getconnectedSize(int x)
+    int getSize(int x)
     {
         return connectedSize[findFa(x)];
     }

@@ -1,43 +1,72 @@
-struct DSU {
+#include <bits/stdc++.h>
+using namespace std;
+
+struct DSU
+{
     vector<int> fa;
-    DSU(int n) : fa(n + 1) {
+    DSU(int n) : fa(n + 1)
+    {
         iota(fa.begin(), fa.end(), 0);
     }
-    int get(int x) {
-        while (x != fa[x]) {
+    int findFa(int x)
+    {
+        while (x != fa[x])
+        {
             x = fa[x] = fa[fa[x]];
         }
         return x;
     }
-    bool merge(int x, int y) { // 设x是y的祖先
-        x = get(x), y = get(y);
-        if (x == y) return false;
+    bool connect(int x, int y)
+    { // 设x是y的祖先
+        x = findFa(x), y = findFa(y);
+        if (x == y)
+            return false;
         fa[y] = x;
         return true;
     }
-    bool same(int x, int y) {
-        return get(x) == get(y);
+    bool isConnected(int x, int y)
+    {
+        return findFa(x) == findFa(y);
     }
 };
-struct Tree {
-    using TII = tuple<int, int, int>;
-    int n;
-    priority_queue<TII, vector<TII>, greater<TII>> ver;
 
-    Tree(int n) {
-        this->n = n;
+struct Edge
+{
+    int x, y, w;
+
+    bool operator<(const Edge &other)
+    {
+        return w < other.w;
     }
-    void add(int x, int y, int w) {
-        ver.emplace(w, x, y); // 注意顺序
+};
+
+struct Tree
+{
+    int n;
+    priority_queue<Edge> edges;
+
+    Tree(int n) : n(n) {}
+
+    void add(int x, int y, int w)
+    {
+        edges.push({x, y, w});
     }
-    int kruskal() {
+
+    int kruskal()
+    {
         DSU dsu(n);
         int ans = 0, cnt = 0;
-        while (ver.size()) {
-            auto [w, x, y] = ver.top();
-            ver.pop();
-            if (dsu.same(x, y)) continue;
-            dsu.merge(x, y);
+        while (edges.size())
+        {
+            auto top = edges.top();
+
+            int x = top.x, y = top.y, w = top.w;
+
+            edges.pop();
+
+            if (dsu.isConnected(x, y))
+                continue;
+            dsu.connect(x, y);
             ans += w;
             cnt++;
         }
