@@ -1,62 +1,74 @@
-struct HopcroftKarp {
-    vector<vector<int>> g;
-    vector<int> pa, pb, vis;
-    int n, m, dfn, res;
+#include <bits/stdc++.h>
+using namespace std;
 
-    HopcroftKarp(int _n, int _m) : n(_n + 1), m(_m + 1) {
-        assert(0 <= n && 0 <= m);
-        pa.assign(n, -1);
-        pb.assign(m, -1);
-        vis.resize(n);
-        g.resize(n);
-        res = 0;
-        dfn = 0;
+struct HopcroftKarp
+{
+    std::vector<std::vector<int>> graph;             // Adjacency list for the bipartite graph
+    std::vector<int> matchLeft, matchRight, visited; // Matching arrays and visited timestamp array
+    int leftSize, rightSize, timestamp, matchCount;  // Sizes of left and right sets, current timestamp, and match count
+
+    // Constructor to initialize the bipartite graph with given sizes
+    HopcroftKarp(int leftNodes, int rightNodes) : leftSize(leftNodes + 1), rightSize(rightNodes + 1)
+    {
+        assert(0 <= leftSize && 0 <= rightSize); // Ensure valid sizes
+        matchLeft.assign(leftSize, -1);          // Initialize match arrays with -1 (no match)
+        matchRight.assign(rightSize, -1);
+        visited.resize(leftSize); // Initialize visited array
+        graph.resize(leftSize);   // Initialize adjacency list
+        matchCount = 0;           // Initialize match count
+        timestamp = 0;            // Initialize timestamp
     }
-    void add(int x, int y) {
-        assert(0 <= x && x < n && 0 <= y && y < m);
-        g[x].push_back(y);
+
+    // Function to add an edge between a left node and a right node
+    void addEdge(int leftNode, int rightNode)
+    {
+        assert(0 <= leftNode && leftNode < leftSize && 0 <= rightNode && rightNode < rightSize); // Ensure valid nodes
+        graph[leftNode].push_back(rightNode);                                                    // Add edge to the adjacency list
     }
-    bool dfs(int v) {
-        vis[v] = dfn;
-        for (int u : g[v]) {
-            if (pb[u] == -1) {
-                pb[u] = v;
-                pa[v] = u;
-                return true;
+
+    // Depth First Search to find augmenting paths
+    bool depthFirstSearch(int leftNode)
+    {
+        visited[leftNode] = timestamp;        // Mark the node as visited with the current timestamp
+        for (int rightNode : graph[leftNode]) // Iterate over all adjacent right nodes
+        {
+            if (matchRight[rightNode] == -1) // If the right node is not matched
+            {
+                matchRight[rightNode] = leftNode; // Match the nodes
+                matchLeft[leftNode] = rightNode;
+                return true; // Augmenting path found
             }
         }
-        for (int u : g[v]) {
-            if (vis[pb[u]] != dfn && dfs(pb[u])) {
-                pa[v] = u;
-                pb[u] = v;
-                return true;
+        for (int rightNode : graph[leftNode]) // Iterate again to find alternate paths
+        {
+            if (visited[matchRight[rightNode]] != timestamp && depthFirstSearch(matchRight[rightNode])) // Recursive DFS
+            {
+                matchLeft[leftNode] = rightNode; // Match the nodes
+                matchRight[rightNode] = leftNode;
+                return true; // Augmenting path found
             }
         }
-        return false;
+        return false; // No augmenting path found
     }
-    int work() {
-        while (1) {
-            dfn++;
-            int cnt = 0;
-            for (int i = 0; i < n; i++) {
-                if (pa[i] == -1 && dfs(i)) {
-                    cnt++;
+
+    // Function to find the maximum matching in the bipartite graph
+    int findMaximumMatching()
+    {
+        while (true)
+        {
+            timestamp++;        // Increment timestamp for a new round of DFS
+            int newMatches = 0; // Count of new matches in this round
+            for (int i = 0; i < leftSize; i++)
+            {
+                if (matchLeft[i] == -1 && depthFirstSearch(i)) // If the left node is not matched, perform DFS
+                {
+                    newMatches++; // Increment new matches count
                 }
             }
-            if (cnt == 0) break;
-            res += cnt;
+            if (newMatches == 0) // If no new matches found, break the loop
+                break;
+            matchCount += newMatches; // Add new matches to the total match count
         }
-        return res;
+        return matchCount; // Return the total number of matches
     }
 };
-signed main() {
-    int n1, n2, m;
-    cin >> n1 >> n2 >> m;
-    HopcroftKarp flow(n1, n2);
-    while (m--) {
-        int x, y;
-        cin >> x >> y;
-        flow.add(x, y);
-    }
-    cout << flow.work() << endl;
-}
